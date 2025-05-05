@@ -34,7 +34,8 @@ if uploaded_file is not None:
     st.dataframe(data.head())
 
     # Assume the target column is 'Class' (0 = non-fraud, 1 = fraud)
-   target_column = "Class"  # You can change this if needed
+   
+target_column = "Class"  # You can change this if needed
 
 if target_column in data.columns:
     X = data.drop(target_column, axis=1)
