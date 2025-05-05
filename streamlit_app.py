@@ -34,12 +34,15 @@ if uploaded_file is not None:
     st.dataframe(data.head())
 
     # Assume the target column is 'Class' (0 = non-fraud, 1 = fraud)
-    if 'Class' in data.columns:
-        X = data.drop('Class', axis=1)
-        y = data['Class']
-    else:
-        X = data
-        y = None
+   target_column = "Class"  # You can change this if needed
+
+if target_column in data.columns:
+    X = data.drop(target_column, axis=1)
+    y = data[target_column]
+else:
+    st.warning(f"'{target_column}' column not found. Proceeding without labels.")
+    X = data
+    y = None
 
     # Make predictions
     predictions, probabilities = predict(model, X)
