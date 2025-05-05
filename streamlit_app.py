@@ -1,72 +1,44 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
 import joblib
-from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
+from sklearn.preprocessing import StandardScaler
 
-# Load the model
-model = joblib.load("fraud_model.pkl")
+# Load the model and scaler
+model = joblib.load('fraud_model.pkl')
+scaler = joblib.load('scaler.pkl')  # Make sure this file exists
+
+# Streamlit app header
+st.title("Credit Card Fraud Detection")
+
+# Sidebar for input
+st.sidebar.header("Transaction Details")
+amount = st.sidebar.number_input("Transaction Amount", min_value=0.0, step=0.1)
+time = st.sidebar.number_input("Time (in seconds)", min_value=0.0, step=0.1)
+
+# Additional user inputs
+transaction_type = st.sidebar.selectbox("Transaction Type", ["Debit", "Credit"])
+location = st.sidebar.text_input("Location", "Unknown")
+transaction_category = st.sidebar.text_input("Transaction Category", "Groceries")
+
+# Scale the numeric values (e.g., Amount, Time)
+scaled = scaler.transform([[amount, time]])
+scaled_amount = scaled[0][0]
+scaled_time = scaled[0][1]
+
+# Map categorical inputs to numeric
+transaction_type_encoded = 1 if transaction_type == "Debit" else 0
+
+# Prepare the input features
+features = [scaled_amount, scaled_time, transaction_type_encoded, location, transaction_category]
 
 # Function to make predictions
-def predict(model, X):
-    predictions = model.predict(X)
-    probabilities = model.predict_proba(X)
+def predict_fraud(features):
+    return model.predict([features])
 
-    # Safely get class 1 probabilities
-    if probabilities.shape[1] == 1:
-        prob_class_1 = probabilities[:, 0]  # Only one column exists
+# Predict button
+if st.sidebar.button("Predict Fraud"):
+    prediction = predict_fraud(features)
+    if prediction == 1:
+        st.write("This transaction is **FRAUDULENT**!")
     else:
-        prob_class_1 = probabilities[:, 1]  # Normal case
-
-    return predictions, prob_class_1
-
-# Title
-st.title("Credit Card Fraud Detection App")
-
-# File uploader
-uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
-
-if uploaded_file is not None:
-    data = pd.read_csv(uploaded_file)
-    st.write("Data Preview:")
-    st.dataframe(data.head())
-
-    # Assume the target column is 'Class' (0 = non-fraud, 1 = fraud)
-   
-target_column = "Class"  # You can change this if needed
-
-if target_column in data.columns:
-    X = data.drop(target_column, axis=1)
-    y = data[target_column]
-else:
-    st.warning(f"'{target_column}' column not found. Proceeding without labels.")
-    X = data
-    y = None
-
-    # Make predictions
-    predictions, probabilities = predict(model, X)
-
-    # Add results to the dataframe
-    data['Prediction'] = predictions
-    data['Fraud Probability'] = probabilities
-
-    st.subheader("Prediction Results")
-    st.dataframe(data[['Prediction', 'Fraud Probability']].head())
-
-    # Show fraud counts
-    fraud_count = np.sum(predictions)
-    total = len(predictions)
-    st.write(f"Detected {fraud_count} fraudulent transactions out of {total}")
-
-    # If true labels exist, show metrics
-    if y is not None:
-        st.subheader("Model Performance")
-        st.text("Classification Report:")
-        st.text(classification_report(y, predictions))
-        st.text("Confusion Matrix:")
-        st.write(confusion_matrix(y, predictions))
-        st.text(f"ROC-AUC Score: {roc_auc_score(y, probabilities):.2f}")
-else:
-    st.info("Upload a CSV file to start fraud detection.")
+        st.write("This transaction is **NOT FRAUDULENT**.")
