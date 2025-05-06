@@ -79,5 +79,3 @@ Edit
 - **Contributing**: Explains how others can contribute to the project.
 - **License**: Licensing information for the project.
 - **Acknowledgements**: Credits for any tools, libraries, or communities that contributed to your work.
-
-You can adjust the sections or further elaborate on specifics related to your repo. If you have any additional features, such as data preprocessing pipelines or other components, you can include them as well.
